@@ -1,14 +1,16 @@
 replicaCount: 1
-## @param auth.existingSecret Existing secret containing password,username,dbname and 
-  ##
-existingSecret: ""
-
 image:
   registry: docker.io
-  repository: formsflow/forms-flow-bpm
-  pullPolicy: IfNotPresent
+  repository: formsflow/epic-custom-service
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v7.3.0"
+  tag: "v8.1.0-alpha"
+    ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ## Example:
+  ## pullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
   pullSecrets:
     - forms-flow-ai-auth
 ## @param nameOverride String to partially override common.names.fullname
@@ -20,14 +22,10 @@ fullnameOverride: ""
 ## @param commonLabels Labels to add to all deployed objects
 ##
 commonLabels: {}
-## @param dnsPolicy DNS Policy for pod
-## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
-## E.g.
-## dnsPolicy: ClusterFirst
-dnsPolicy: "ClusterFirst"
 ## @param commonAnnotations Annotations to add to all deployed objects
 ##
 commonAnnotations: {}
+
 ## @param tolerations Tolerations for pod assignment
 ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
 ##
@@ -48,11 +46,11 @@ priorityClassName: ""
 ## @param schedulerName Name of the k8s scheduler (other than default)
 ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
 ##
-schedulerName: "default-scheduler"
-## @param terminationGracePeriodSeconds In seconds, time the given to the forms-flow-bpm pod needs to terminate gracefully
+schedulerName: ""
+## @param terminationGracePeriodSeconds In seconds, time the given to the forms-flow-api pod needs to terminate gracefully
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
 ##
-terminationGracePeriodSeconds: "30"
+terminationGracePeriodSeconds: ""
 ## @param topologySpreadConstraints Topology Spread Constraints for pod assignment
 ## https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
 ## The value is evaluated as a template
@@ -72,9 +70,6 @@ diagnosticMode:
   args:
     - infinity
 
-## @param hostAliases Add deployment host aliases
-## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
-##
 hostAliases: []
 
 serviceAccount:
@@ -88,25 +83,50 @@ serviceAccount:
   ## @param automountServiceAccountToken Mount Service Account token in pod
   ##
   automountServiceAccountToken: false
-
-podManagementPolicy: OrderedReady
 ## @param podAnnotations Pod annotations
 ## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 ##
 podAnnotations: {}
-## @param podLabels Extra labels for forms-flow-bpm pods
+## @param podLabels Extra labels for forms-flow-api pods
 ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 ##
 podLabels: {}
+## @param podAffinityPreset Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+##
+podAffinityPreset: ""
+## @param podAntiAffinityPreset Pod anti-affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+##
+podAntiAffinityPreset: soft
+## Node affinity preset
+## Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+##
+nodeAffinityPreset:
+  ## @param nodeAffinityPreset.type Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+  ##
+  type: ""
+  ## @param nodeAffinityPreset.key Node label key to match. Ignored if `affinity` is set.
+  ## E.g.
+  ## key: "kubernetes.io/e2e-az-name"
+  ##
+  key: ""
+  ## @param nodeAffinityPreset.values Node label values to match. Ignored if `affinity` is set.
+  ## E.g.
+  ## values:
+  ##   - e2e-az1
+  ##   - e2e-az2
+  ##
+  values: []
 
-## K8s Security Context for forms-flow-bpm pods
+## K8s Security Context for forms-flow-api pods
 ## Configure Pods Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
-## @param podSecurityContext.enabled Enabled forms-flow-bpm pods' Security Context
+## @param podSecurityContext.enabled Enabled forms-flow-api pods' Security Context
 ## @param podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
 ## @param podSecurityContext.sysctls Set kernel settings using the sysctl interface
 ## @param podSecurityContext.supplementalGroups Set filesystem extra groups
-## @param podSecurityContext.fsGroup Set forms-flow-bpm pod's Security Context fsGroup
+## @param podSecurityContext.fsGroup Set forms-flow-api pod's Security Context fsGroup
 ##
 podSecurityContext:
   enabled: false
@@ -146,12 +166,47 @@ command: []
 ## @param args Override default container args (useful when using custom images)
 ##
 args: []
-## @param lifecycleHooks for the forms-flow-bpm container(s) to automate configuration before or after startup
+## @param lifecycleHooks for the forms-flow-api container(s) to automate configuration before or after startup
 ##
 lifecycleHooks: {}
-
 automountServiceAccountToken: true
-## @param updateStrategy.type Set up update strategy for forms-flow-bpm installation.
+## @param extraEnvVars Extra environment variables to be set on formsflow api container
+## Example:
+## extraEnvVars:
+##   - name: FOO
+##     value: "bar"
+##
+extraEnvVars: []
+## @param extraEnvVarsCM Name of existing ConfigMap containing extra env vars
+##
+extraEnvVarsCM: ""
+## @param extraVolumes Array to add extra volumes (evaluated as a template)
+## extraVolumes:
+##   - name: myvolume
+##     configMap:
+##       name: myconfigmap
+##
+extraVolumes: {}
+## @param extraVolumeMounts Array to add extra mounts (normally used with extraVolumes, evaluated as a template)
+## extraVolumeMounts:
+##   - mountPath: /opt/bitnami/desired-path
+##     name: myvolume
+##     readOnly: true
+##
+extraVolumeMounts: {}
+## sidecars configuration
+sidecars: {}
+ExtraContainer:
+  ## nginx configuration for sidecar 
+  image:
+    registry: docker.io
+    repository: nginxinc/nginx-unprivileged
+    pullPolicy: IfNotPresent
+    tag: "latest"
+## @param auth.existingSecret Existing secret containing password,username,dbname and 
+  ##
+existingSecret: ""
+## @param updateStrategy.type Set up update strategy for forms-flow-api installation.
 ## Set to Recreate if you use persistent volume that cannot be mounted by more than one pods to make sure the pods is destroyed first.
 ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
 ## Example:
@@ -167,56 +222,11 @@ updateStrategy:
     maxSurge: 25%
     maxUnavailable: 25%
 
-## @param minReadySeconds How many seconds a pod needs to be ready before killing the next, during update
-##
-minReadySeconds: 0
-## @param extraEnvVars Extra environment variables to be set on formsflow bpm container
-## Example:
-## extraEnvVars:
-##   - name: FOO
-##     value: "bar"
-##
-extraEnvVars: 
-  - name: VAULT_ENABLED
-    value: "false"
-  - name: VAULT_URL
-    value: ""
-  - name: VAULT_TOKEN
-    value: ""
-  - name: VAULT_PATH
-    value: ""
-  - name: VAULT_SECRET
-    value: ""
-## @param extraEnvVarsCM Name of existing ConfigMap containing extra env vars
-##
-extraEnvVarsCM: ""
-## @param extraVolumes Optionally specify extra list of additional volumes for formsflow bpm pods
-##
-## @param extraVolumes Array to add extra volumes (evaluated as a template)
-## extraVolumes:
-##   - name: myvolume
-##     configMap:
-##       name: myconfigmap
-##
-extraVolumes: {}
-          
-## @param extraVolumeMounts Array to add extra mounts (normally used with extraVolumes, evaluated as a template)
-## extraVolumeMounts:
-##   - mountPath: /opt/bitnami/desired-path
-##     name: myvolume
-##     readOnly: true
-##
-extraVolumeMounts: {}
-
-## @param auth.existingSecret Existing secret containing password,username,dbname and 
-  ##
-existingSecret: ""
-
-## forms-flow-bpm ingress parameters
+## forms-flow-api ingress parameters
 ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ##
 ingress:
-  ## @param ingress.enabled Enable ingress record generation for forms-flow-bpm
+  ## @param ingress.enabled Enable ingress record generation for forms-flow-api
   ##
   enabled: true
   ## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
@@ -240,7 +250,7 @@ ingress:
   hostname: fhir-epic.aot-technologies.com
   ## @param ingress.path [string] Default path for the ingress record (evaluated as template)
   ##
-  path: "/camunda"
+  path: "/docs"
   ## @param ingress.servicePort Backend service port to use
   ## Default is http. Alternative is https.
   ##
@@ -256,11 +266,11 @@ ingress:
   annotations: {}
   ## nginx.ingress.kubernetes.io/proxy-body-size: 50M
   ## if openshift add annotation
-  ## haproxy.router.openshift.io/max-body-size=50m  
+  ## haproxy.router.openshift.io/max-body-size=50m
   ## @param ingress.labels Additional labels for the Ingress resource.
   ## e.g:
   ## labels:
-  ##   app: forms-flow-bpm
+  ##   app: forms-flow-api
   ##
   labels: {}
   ## @param ingress.tls Enable TLS configuration for the host defined at `ingress.hostname` parameter
@@ -277,7 +287,7 @@ ingress:
   ## @param ingress.extraHosts An array with additional hostname(s) to be covered with the ingress record
   ## e.g:
   ## extraHosts:
-  ##   - name: forms-flow-bpm.local
+  ##   - name: forms-flow-api.local
   ##     path: /
   ##
   extraHosts: []
@@ -294,8 +304,8 @@ ingress:
   ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
   ## extraTls:
   ## - hosts:
-  ##     - forms-flow-bpm.local
-  ##   secretName: forms-flow-bpm.local-tls
+  ##     - forms-flow-api.local
+  ##   secretName: forms-flow-api.local-tls
   ##
   extraTls: []
   ## @param ingress.secrets If you're providing your own certificates, please use this to add the certificates as secrets
@@ -308,7 +318,7 @@ ingress:
   ## It is also possible to create and manage the certificates outside of this helm chart
   ## Please see README.md for more information
   ## e.g:
-  ## - name: forms-flow-bpm.local-tls
+  ## - name: forms-flow-api.local-tls
   ##   key:
   ##   certificate:
   ##
@@ -327,29 +337,9 @@ ingress:
   ##             name: http
   ##
   extraRules: []
-## forms-flow-bpm admin ingress parameters
+## forms-flow-api admin ingress parameters
 ## ref: https://kubernetes.io/docs/user-guide/ingress/
 ##
-
-## Specifies whether RBAC resources should be created
-##
-rbac:
-  ## @param rbac.create Whether to create and use RBAC resources or not
-  ##
-  create: false
-  ## @param rbac.rules Custom RBAC rules
-  ## Example:
-  ## rules:
-  ##   - apiGroups:
-  ##       - ""
-  ##     resources:
-  ##       - pods
-  ##     verbs:
-  ##       - get
-  ##       - list
-  ##
-  rules: []
-
 ## Pod disruption budget configuration
 ## ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/
 ## @param pdb.create If true, create a pod disruption budget for pods.
@@ -360,7 +350,7 @@ pdb:
   create: true
   minAvailable: ""
   maxUnavailable: ""
-## forms-flow-bpm containers' resource requests and limits
+## forms-flow-api containers' resource requests and limits
 ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
 ## We usually recommend not to specify default resources and to leave this as a conscious
 ## choice for the user. This also increases chances charts run on environments with little
@@ -382,39 +372,11 @@ resourcesPreset: "small"
 ##
 resources:
   limits:
-    cpu: 600m
+    cpu: 300m
     memory: 1Gi
   requests:
-    cpu: 500m
+    cpu: 200m
     memory: 512Mi
-## @param livenessProbe.enabled Enable livenessProbe
-## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
-## @param livenessProbe.periodSeconds Period seconds for livenessProbe
-## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
-## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
-## @param livenessProbe.successThreshold Success threshold for livenessProbe
-##
-livenessProbe:
-  enabled: true
-  failureThreshold: 5
-  initialDelaySeconds: 120
-  periodSeconds: 60
-  successThreshold: 1
-  timeoutSeconds: 3
-## @param readinessProbe.enabled Enable readinessProbe
-## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
-## @param readinessProbe.periodSeconds Period seconds for readinessProbe
-## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
-## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
-## @param readinessProbe.successThreshold Success threshold for readinessProbe
-##
-readinessProbe:
-  enabled: true
-  failureThreshold: 5
-  initialDelaySeconds: 120
-  periodSeconds: 60
-  successThreshold: 1
-  timeoutSeconds: 3
 ## @param customStartupProbe Custom startup probe for the Web component
 ##
 
@@ -433,12 +395,16 @@ service:
   ## @param service.type Kubernetes service type (`ClusterIP`, `NodePort`, or `LoadBalancer`)
   ##
   type: ClusterIP
-  ## @param service.ports [array] forms-flow-bpm service ports (evaluated as a template)
+  ## @param service.ports [array] forms-flow-api service ports (evaluated as a template)
   ##
   ports:
     - name: http
-      port: 8080
+      port: 5005
       targetPort: http
+      protocol: TCP 
+    - name: nginx
+      port: 8080
+      targetPort: 8080
       protocol: TCP
       ## - name: system
       ##   port: 1764
@@ -463,7 +429,7 @@ service:
   ## clusterIP: None
   ##
   clusterIP: ""
-  ## @param service.annotations Annotations for forms-flow-bpm service
+  ## @param service.annotations Annotations for forms-flow-api service
   ##
   annotations: {}
   ## @param service.sessionAffinity Session Affinity for Kubernetes service, can be "None" or "ClientIP"
@@ -483,45 +449,19 @@ service:
     ## @param service.headless.annotations Annotations for the headless service.
     ##
     annotations: {}
+
+configuration: []
+
+maxSizePayload: 50M
+
 containerPorts:
-  http: 8080
+  http: 5005
 
-
-## @param sidecars Add additional sidecar containers to the forms-flow-bpm pod
-  ## Example:
-  ## sidecars:
-  ##    - name: filebeat-admin
-  ##      image: docker.elastic.co/beats/filebeat:7.14.0
-  ##      env:
-  ##        - name: ELASTIC_SERVER
-  ##          valueFrom:
-  ##            configMapKeyRef:
-  ##              key: ELASTIC_SERVER
-  ##              name: "{{ .Values.formsflow.configmap }}"
-  ##      volumeMounts:
-  ##      - name: admin-logs
-  ##        mountPath: /opt/app-root/logs
-  ##      - mountPath: /usr/share/filebeat/filebeat.yml
-  ##        subPath: filebeat.yml
-  ##        name: admin-filebeat
-sidecars: []
-
-## Example:
-## configuration: |-
-##    foo: bar
-##    baz:
-##
-configuration: ""
-## @param existingConfigmap Name of existing ConfigMap with Keycloak configuration
-## NOTE: When it's set the configuration parameter is ignored
-##
-existingConfigmap: ""
-
-## forms-flow-bpm Autoscaling configuration
+## forms-flow-api Autoscaling configuration
 ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
-## @param autoscaling.enabled Enable autoscaling for forms-flow-bpm
-## @param autoscaling.minReplicas Minimum number of forms-flow-bpm replicas
-## @param autoscaling.maxReplicas Maximum number of forms-flow-bpm replicas
+## @param autoscaling.enabled Enable autoscaling for forms-flow-api
+## @param autoscaling.minReplicas Minimum number of forms-flow-api replicas
+## @param autoscaling.maxReplicas Maximum number of forms-flow-api replicas
 ## @param autoscaling.targetCPU Target CPU utilization percentage
 ## @param autoscaling.targetMemory Target Memory utilization percentage
 ##
@@ -567,86 +507,13 @@ autoscaling:
           value: 1
           periodSeconds: 300
 
-camunda:
-  analytics:
-    database: forms-flow-analytics
-  auth:
-    enabled: true
-    revokeCheck: auto
-  database:
-    name: fhir-bpm
-    port: 5432
-  historyLevel: auto
-  securityOrigin: '*'
-  logLevel: INFO
-  HeaderSize: '32000'
-  formBuilder:
-    password: demo # CAMUNDA_FORMBUILDER_PIPELINE_PASSWORD
-    username: demo # CAMUNDA_FORMBUILDER_PIPELINE_USERNAME
-  hikari:
-    timeout:
-      connection: 30000 #CAMUNDA_HIKARI_CONNECTION_TIMEOUT
-      idle: 600000 #CAMUNDA_HIKARI_IDLE_TIMEOUT
-      valid: 5000 #CAMUNDA_HIKARI_VALID_TIMEOUT
-    poolsize:
-      max: 10 #CAMUNDA_HIKARI_MAX_POOLSIZE
-  jdbc:
-    driver: org.postgresql.Driver
-    username: formsflow
-    password: 9bJI5yJ1DYqZ
-    url: "jdbc:postgresql://${CAMUNDA_DATABASE_SERVICE_NAME}:${CAMUNDA_DATABASE_PORT}/${CAMUNDA_DATABASE_NAME}"
-  websocket:
-    messageType: TASK_EVENT #WEBSOCKET_MESSAGE_TYPE
-    securityOrigin:   #WEBSOCKET_SECURITY_ORIGIN
-  ExternalDatabase:
-    ExistingDatabaseHostKey: ""
-    ExistingDatabasePortKey: ""
-    ExistingDatabaseNameKey: ""
-    ExistingDatabaseUsernameKey: ""
-    ExistingDatabasePasswordKey: ""    
-    ExistingSecretName: "" #name of the existing secret
-    ExistingConfigmapName: ""
-  ClientConnectionTimeOut: "60000"
-  DataBufferSize: "2"
-  IdentityProviderMaxResultSize: "250"
-  SessionCookieSecure: "true"
-mail:
-  protocol: smtp
-  from: "<DEFINE_ME>"
-  password: "<DEFINE_ME>"
-  user: "<DEFINE_ME>"
-  alias: DoNotReply
-  folder: INBOX
-  smtp:
-    auth: true
-    port: 5432
-    server: "<DEFINE_ME>"
-    socketFactory:
-      port: 465
-      class: javax.net.ssl.SSLSocketFactory
-    ssl:
-      enable: false
-  store:
-    protocol: imaps
-  imaps:
-    host: imap.gmail.com
-    port: 993
-    timeout: 1000
-  attachment:
-    download: true
-    path: attachments
 formsflow:
   configmap: forms-flow-ai # name of formsflow.ai configmap
   secret: forms-flow-ai #name of formsflow.ai secret
-waitFor: "${CAMUNDA_DATABASE_SERVICE_NAME}:${CAMUNDA_DATABASE_PORT}"
+  
+secretKey: ''
+jwtSecretKey: ''
+jwtExpiryMinutes: ''
 
-## Configures the ImmuDB Audit Plugin for Camunda
-immudbAuditPlugin:
-  enabled: true
-  image:
-    repository: formsflow/forms-flow-immudb-plugin
-    tag: v8.0.0-alpha
-    pullPolicy: Always
-  serviceUrl: "http://forms-flow-immudb:5001/api/v1/audit/log"
-  authToken: "1Ipjwuf3k3Mj-QI97iGhZMsJx2lxXzIWT6afdg9f-l0="
-
+ExternalLinkExpiryMinutes: ''
+ExternalLinkBaseUrl: ''

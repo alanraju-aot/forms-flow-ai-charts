@@ -1,10 +1,10 @@
 apiVersion: v2
-name: forms-flow-bpm
-description: forms-flow-bpm is a component which leverages Camunda for workflow and decision automation and its provided by formsflow.
+name: forms-flow-immudb
+description: forms-flow-immudb is an immutable audit logging service and immudb ledger integration for formsflow.ai.
 icon: "https://raw.githubusercontent.com/AOT-Technologies/forms-flow-ai/develop/.images/logo.png"
 version: v8.3.2
 type: application
-appVersion: "8.3.1"
+appVersion: "8.1.0"
 dependencies:
 - name: common
   repository: https://charts.bitnami.com/bitnami
