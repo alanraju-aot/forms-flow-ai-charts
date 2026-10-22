@@ -153,47 +153,30 @@ forms-flow-idm:
 | `forms-flow-web.ingress.hostname`         | Hostname for the Forms Flow Web ingress.                    | `forms-flow-web-{{.Release.Namespace}}.{{tpl (.Values.Domain) .}}`     |
 
 ## Database Parameters
-### MongoDB 
+### MongoDB Community Operator
 
 | Parameter                                        | Description                                                  | Default Value                    |
 |--------------------------------------------------|--------------------------------------------------------------|----------------------------------|
-| `mongodb.image.tag`                              | Docker image tag for MongoDB.                               | `8.0.10-debian-12-r2`           |
-|`mongodb.image.repository`|                       | Docker image repository                                     | `bitnamilegacy`
-| `mongodb.image.pullSecrets`                      | Secrets for pulling the Docker image.                       | `forms-flow-auth`                |
-| `mongodb.enabled`                                | Enable or disable MongoDB deployment.                       | `true` 
-|`mongodb.global.security.allowInsecureimages`     |   Allow to pull image from legacy registry                  | `true` 
-| `mongodb.fullnameOverride`                       | Custom name for the MongoDB service.                        | `forms-flow-ai-mongodb`         |
-| `mongodb.clusterDomain`                          | Domain for the MongoDB cluster.                             | `cluster.local`                  |
-| `mongodb.architecture`                           | Architecture type (replica set or standalone).              | `replicaset`                     |
-| `mongodb.useStatefulSet`                         | Use StatefulSet for MongoDB pods.                           | `true`                           |
-| `mongodb.auth.enabled`                           | Enable or disable authentication for MongoDB.               | `true`                           |
-| `mongodb.auth.databases`                         | List of databases to create.                                | `formsflow`                     |
-| `mongodb.auth.passwords`                         | List of passwords for the databases.                        | `changeme`                       |
-| `mongodb.auth.usernames`                         | List of usernames for the databases.                        | `mongodb`                       |
-| `mongodb.replicaSetName`                         | Name of the replica set.                                    | `rs0`                            |
-| `mongodb.replicaSetHostnames`                   | Enable replica set hostnames.                               | `true`                           |
-| `mongodb.directoryPerDB`                         | Use separate directories for each database.                 | `false`                          |
-| `mongodb.replicaCount`                           | Number of replicas to create.                               | `3`                              |
-| `mongodb.podSecurityContext.enabled`             | Enable pod security context for MongoDB pods.               | `false`                          |
-| `mongodb.podSecurityContext.fsGroup`             | File system group ID for the MongoDB pod.                  | `1001`                           |
-| `mongodb.containerSecurityContext.enabled`       | Enable container security context.                          | `false`                          |
-| `mongodb.containerSecurityContext.runAsUser`     | User ID to run MongoDB container as.                        | `1001`                           |
-| `mongodb.containerSecurityContext.runAsNonRoot`  | Ensure MongoDB container runs as a non-root user.          | `true`                           |
-| `mongodb.containerPorts.mongodb`                 | Port for MongoDB service.                                   | `27017`                          |
-| `mongodb.service.nameOverride`                   | Custom name for the MongoDB service.                        | `forms-flow-ai-mongodb`         |
-| `mongodb.service.type`                           | Type of Kubernetes service (ClusterIP, NodePort, LoadBalancer). | `ClusterIP`                     |
-| `mongodb.service.portName`                       | Name of the port for the MongoDB service.                  | `mongodb`                       |
-| `mongodb.service.ports.mongodb`                  | Port number for MongoDB service.                            | `27017`                          |
-| `mongodb.persistence.enabled`                    | Enable or disable persistence for MongoDB.                 | `true`                           |
-| `mongodb.persistence.accessModes`                | Access modes for the persistent volume.                     | `ReadWriteOnce`                 |
-| `mongodb.persistence.size`                       | Size of the persistent volume.                              | `8Gi`                            |
-| `mongodb.persistence.mountPath`                  | Mount path for the persistent volume.                       | `/bitnami/mongodb`              |
-| `mongodb.serviceAccount.create`                  | Create a service account for MongoDB.                       | `true`                           |
-| `mongodb.arbiter.enabled`                        | Enable or disable arbiter for the replica set.              | `false`                          |
-| `mongodb.arbiter.podSecurityContext.enabled`     | Enable pod security context for arbiter pod.                | `false`                          |
-| `mongodb.arbiter.podSecurityContext.fsGroup`     | File system group ID for the arbiter pod.                  | `1001`                           |
-| `mongodb.arbiter.containerSecurityContext.enabled`| Enable container security context for arbiter.             | `false`                          |
-| `mongodb.arbiter.containerSecurityContext.runAsUser` | User ID for arbiter container.                             | `1001`                           |
+| `mongodbCommunity.enabled`                       | Enable deployment of MongoDBCommunity Custom Resource.       | `true`                           |
+| `mongodbCommunity.name`                          | Name of the MongoDB cluster and replica set.                 | `forms-flow-mongodb`             |
+| `mongodbCommunity.version`                       | MongoDB engine version (e.g., 7.0.14, 6.0.19, 8.0.0).         | `7.0.14`                         |
+| `mongodbCommunity.members`                       | Number of replica set members (3 for HA, 1 for single-node). | `3`                              |
+| `mongodbCommunity.type`                          | Architecture type (`ReplicaSet`).                            | `ReplicaSet`                     |
+| `mongodbCommunity.port`                          | Service port for MongoDB.                                    | `27017`                          |
+| `mongodbCommunity.auth.database`                 | Database name created for forms-flow-ai.                     | `formsflow`                      |
+| `mongodbCommunity.auth.username`                 | Username for application database authentication.            | `mongodb`                        |
+| `mongodbCommunity.auth.password`                 | Password for the application database user.                  | `changeme`                       |
+| `mongodbCommunity.auth.authSource`               | Authentication database.                                     | `admin`                          |
+| `mongodbCommunity.storage.storageClassName`      | StorageClass for persistent volumes (e.g. `gp3`).            | `""` (Cluster default)           |
+| `mongodbCommunity.storage.size`                  | Size of the persistent storage volume.                       | `8Gi`                            |
+| `mongodbCommunity.resources.requests.cpu`        | CPU requests for mongod container.                           | `500m`                           |
+| `mongodbCommunity.resources.requests.memory`     | Memory requests for mongod container.                        | `1Gi`                            |
+| `mongodbCommunity.resources.limits.cpu`          | CPU limits for mongod container.                             | `2`                              |
+| `mongodbCommunity.resources.limits.memory`       | Memory limits for mongod container.                          | `2Gi`                            |
+| `mongodbCommunity.customImage.enabled`           | Enable using a custom in-house container image.              | `false`                          |
+| `mongodbCommunity.customImage.image`             | Custom MongoDB container image reference.                    | `""`                             |
+| `mongodbCommunity.customUri`                     | Direct MongoDB connection URI override (if external).        | `""`                             |
+
 
 ### PostgreSQL 
 

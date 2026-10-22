@@ -1,0 +1,91 @@
+{{- if and .Values.mongodbCommunity .Values.mongodbCommunity.enabled }}
+{{- $clusterName := .Values.mongodbCommunity.name | default "forms-flow-mongodb" -}}
+{{- $secretName := default (printf "%s-user-secret" $clusterName) .Values.mongodbCommunity.auth.existingSecretName -}}
+{{- if not .Values.mongodbCommunity.auth.existingSecretName }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $secretName }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: mongodb-community
+type: Opaque
+stringData:
+  password: {{ .Values.mongodbCommunity.auth.password | default "changeme" | quote }}
+---
+{{- end }}
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: {{ $clusterName }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: mongodb-community
+spec:
+  members: {{ .Values.mongodbCommunity.members | default 3 }}
+  type: {{ .Values.mongodbCommunity.type | default "ReplicaSet" }}
+  version: {{ .Values.mongodbCommunity.version | default "7.0.14" | quote }}
+  security:
+    authentication:
+      modes:
+        - SCRAM
+  users:
+    - name: {{ .Values.mongodbCommunity.auth.username | default "mongodb" | quote }}
+      db: {{ .Values.mongodbCommunity.auth.authSource | default "admin" | quote }}
+      passwordSecretRef:
+        name: {{ $secretName }}
+        key: {{ .Values.mongodbCommunity.auth.existingSecretKey | default "password" }}
+      scramCredentialsSecretName: {{ printf "%s-%s-scram" $clusterName (.Values.mongodbCommunity.auth.username | default "mongodb") }}
+      roles:
+        - name: readWriteAnyDatabase
+          db: admin
+        - name: dbAdminAnyDatabase
+          db: admin
+        - name: userAdminAnyDatabase
+          db: admin
+        - name: clusterAdmin
+          db: admin
+  statefulSet:
+    spec:
+      template:
+        spec:
+          {{- if and .Values.mongodbCommunity.customImage .Values.mongodbCommunity.customImage.enabled .Values.mongodbCommunity.customImage.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml .Values.mongodbCommunity.customImage.imagePullSecrets | nindent 12 }}
+          {{- else if .Values.imageCredentials }}
+          imagePullSecrets:
+            - name: {{ printf "%s-auth" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
+          {{- end }}
+          containers:
+            - name: mongod
+              {{- if and .Values.mongodbCommunity.customImage .Values.mongodbCommunity.customImage.enabled .Values.mongodbCommunity.customImage.image }}
+              image: {{ .Values.mongodbCommunity.customImage.image | quote }}
+              {{- end }}
+              {{- if .Values.mongodbCommunity.resources }}
+              resources:
+                {{- toYaml .Values.mongodbCommunity.resources | nindent 16 }}
+              {{- end }}
+      volumeClaimTemplates:
+        - metadata:
+            name: data-volume
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            {{- if .Values.mongodbCommunity.storage.storageClassName }}
+            storageClassName: {{ .Values.mongodbCommunity.storage.storageClassName | quote }}
+            {{- end }}
+            resources:
+              requests:
+                storage: {{ .Values.mongodbCommunity.storage.size | default "8Gi" | quote }}
+        - metadata:
+            name: logs-volume
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            {{- if .Values.mongodbCommunity.storage.storageClassName }}
+            storageClassName: {{ .Values.mongodbCommunity.storage.storageClassName | quote }}
+            {{- end }}
+            resources:
+              requests:
+                storage: {{ .Values.mongodbCommunity.storage.logsSize | default "4Gi" | quote }}
+{{- end }}

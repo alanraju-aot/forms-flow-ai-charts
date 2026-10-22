@@ -8,9 +8,5 @@ dependencies:
   - name: common
     repository: https://charts.bitnami.com/bitnami
     version: 2.27.0
-  - name: mongodb
-    condition: mongodb.enabled 
-    repository: https://charts.bitnami.com/bitnami
-    version: 16.5.24
 version: v8.4.0
 icon: "https://raw.githubusercontent.com/AOT-Technologies/forms-flow-ai/develop/.images/logo.png"
