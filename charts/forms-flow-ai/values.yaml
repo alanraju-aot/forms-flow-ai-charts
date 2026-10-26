@@ -55,7 +55,7 @@ forms-flow-web:
   EnableMultitenant: false
   clientid: forms-flow-web
   ingress:
-      hostname: forms-flow-web-{{.Release.Namespace}}.{{tpl (.Values.Domain) .}}
+      hostname: forms-flow-{{.Release.Namespace}}.{{tpl (.Values.Domain) .}}
   service:
     name: forms-flow-web
     port: "8080"
@@ -66,180 +66,51 @@ imageCredentials:
   password: "test"
   email: "someone@host.com"
 
-## @param image.registry [default: REGISTRY_NAME] MongoDB(&reg;) image registry
-## @param image.repository [default: REPOSITORY_NAME/mongodb] MongoDB(&reg;) image registry
-## @skip image.tag MongoDB(&reg;) image tag (immutable tags are recommended)
-## @param image.digest MongoDB(&reg;) image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
-## @param image.pullPolicy MongoDB(&reg;) image pull policy
-## @param image.pullSecrets Specify docker-registry secret names as an array
-## @param image.debug Set to true if you would like to see extra information on logs
-##
-mongodb:
-  global: 
-    security: 
-      allowInsecureImages: true
-  image:
-    registry: docker.io
-    repository: bitnamilegacy/mongodb
-    tag: 8.0.10-debian-12-r2 #4.2.21-debian-10-r8
-    pullSecrets:
-      - forms-flow-auth
+# ==============================================================================
+# MongoDB Community Operator Configuration
+# ==============================================================================
+mongodbCommunity:
+  ## @param mongodbCommunity.enabled Deploy or connect to MongoDB Community Operator cluster
   enabled: true
-  ## @param fullnameOverride String to fully override mongodb.fullname template
-  ##
-  fullnameOverride: "forms-flow-ai-mongodb"
-  ## @param clusterDomain Default Kubernetes cluster domain
-  ##
-  clusterDomain: cluster.local
-  ## @param architecture MongoDB(&reg;) architecture (`standalone` or `replicaset`)
-  ##
-  architecture: replicaset
-  ## @param useStatefulSet Set to true to use a StatefulSet instead of a Deployment (only when `architecture=standalone`)
-  ##
-  useStatefulSet: true
-  ## MongoDB(&reg;) Authentication parameters
-  ##
+  ## @param mongodbCommunity.name Name of the MongoDBCommunity custom resource and replica set
+  name: "forms-flow-mongodb"
+  ## @param mongodbCommunity.version MongoDB version to deploy (e.g. "7.0.14", "6.0.19", "8.0.0")
+  version: "7.0.14"
+  ## @param mongodbCommunity.members Number of replica set members (3 for HA, 1 for single-node)
+  members: 3
+  ## @param mongodbCommunity.type Cluster type (ReplicaSet)
+  type: ReplicaSet
+  ## @param mongodbCommunity.port MongoDB service port
+  port: 27017
+  ## Application database and authentication details
   auth:
-    ## @param auth.enabled Enable authentication
-    ## ref: https://docs.mongodb.com/manual/tutorial/enable-authentication/
-    ##
-    enabled: true
-    ## MongoDB(&reg;) custom users and databases
-    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/mongodb#creating-a-user-and-database-on-first-run
-    ## @param auth.usernames List of custom users to be created during the initialization
-    ## @param auth.passwords List of passwords for the custom users set at `auth.usernames`
-    ## @param auth.databases List of custom databases to be created during the initialization
-    ##
-    databases: 
-      - formsflow 
-    passwords:
-      - changeme    #use the same password in initdbscript
-    usernames:
-      - mongodb     #use the same username in initdbscript
-    ## @param auth.rootUser MongoDB(&reg;) root user
-    ##
-    rootUser: root
-    ## @param auth.rootPassword MongoDB(&reg;) root password
-    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/mongodb#setting-the-root-user-and-password-on-first-run
-    ##
-    rootPassword: "changeme"
-    ## @param auth.replicaSetKey Key used for authentication in the replicaset (only when `architecture=replicaset`)
-    ##  
-    replicaSetKey: "formsflow"
-  # initdbScripts:
-  #    init-mongo.js: |
-  #          use admin
-  #          db.createUser({
-  #             user: 'mongodb',     
-  #             pwd: 'changeme',   
-  #             roles: [
-  #               {
-  #                  role: 'readWrite',
-  #                  db: 'formsflow',
-  #               },
-  #             ],
-  #          });
-    options: "authMechanism=SCRAM-SHA-1&authSource=admin"
-  ## @param replicaSetName Name of the replica set (only when `architecture=replicaset`)
-  ## Ignored when mongodb.architecture=standalone
-  ##
-  replicaSetName: rs0
-  ## @param replicaSetHostnames Enable DNS hostnames in the replicaset config (only when `architecture=replicaset`)
-  ## Ignored when mongodb.architecture=standalone
-  ## Ignored when externalAccess.enabled=true
-  ##  
-  replicaSetHostnames: true
-  ## @param directoryPerDB Switch to enable/disable DirectoryPerDB on MongoDB(&reg;)
-  ## ref: https://github.com/bitnami/containers/tree/main/bitnami/mongodb#enablingdisabling-directoryperdb
-  ##  
-  directoryPerDB: false
-  ## @param replicaCount Number of MongoDB(&reg;) nodes
-  ## When `mongodb.architecture=replicaset`, the number of replicas is taken in account
-  ## When `mongodb.architecture=standalone`, the number of replicas can only be 0 or 1 (value higher then 1 will not be taken in account)
-  ##
-  replicaCount: 3
-  ## MongoDB(&reg;) pods' Security Context.
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
-  ## @param podSecurityContext.enabled Enable MongoDB(&reg;) pod(s)' Security Context
-  ## @param podSecurityContext.fsGroupChangePolicy Set filesystem group change policy
-  ## @param podSecurityContext.supplementalGroups Set filesystem extra groups
-  ## @param podSecurityContext.fsGroup Group ID for the volumes of the MongoDB(&reg;) pod(s)
-  ## @param podSecurityContext.sysctls sysctl settings of the MongoDB(&reg;) pod(s)'
-  ##  
-  podSecurityContext:
+    database: "formsflow"
+    username: "mongodb"
+    password: "changeme"
+    authSource: "admin"
+    ## @param mongodbCommunity.auth.existingSecretName Existing Secret name containing password (if pre-created)
+    existingSecretName: ""
+    existingSecretKey: "password"
+  ## Storage configuration (e.g. AWS EKS EBS gp3)
+  storage:
+    storageClassName: "gp2"
+    size: "8Gi"
+    logsSize: "4Gi"
+  ## Resource allocation
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "2Gi"
+  ## Custom image override (optional: if using custom-built image from your private registry)
+  customImage:
     enabled: false
-    fsGroupChangePolicy: Always
-    sysctls: []
-    supplementalGroups: []
-    fsGroup: 1001
-
-  ## MongoDB(&reg;) containers' Security Context (main and metrics container).
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  ## @param containerSecurityContext.enabled Enabled containers' Security Context
-  ## @param containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
-  ## @param containerSecurityContext.runAsUser Set containers' Security Context runAsUser
-  ## @param containerSecurityContext.runAsGroup Set containers' Security Context runAsGroup
-  ## @param containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
-  ## @param containerSecurityContext.privileged Set container's Security Context privileged
-  ## @param containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
-  ## @param containerSecurityContext.allowPrivilegeEscalation Set container's Security Context allowPrivilegeEscalation
-  ## @param containerSecurityContext.capabilities.drop List of capabilities to be dropped
-  ## @param containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
-  ##
-  containerSecurityContext:
-    enabled: false
-    seLinuxOptions: {}
-    runAsUser: 1001
-    runAsGroup: 1001
-    runAsNonRoot: true
-    privileged: false
-    readOnlyRootFilesystem: true
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop: ["ALL"]
-    seccompProfile:
-      type: "RuntimeDefault"
-  ## @param containerPorts.mongodb MongoDB(&reg;) container port
-  ##
-  containerPorts:
-    mongodb: 27017
-  ## @section Traffic exposure parameters
-  ##
-
-  ## Service parameters
-  ##
-  service:
-    nameOverride: "forms-flow-ai-mongodb"
-    type: ClusterIP
-    portName: mongodb
-    ports:
-      mongodb: 27017
-
-  persistence:
-    enabled: true
-    storageClass: ""
-    accessModes:
-      - ReadWriteOnce
-    size: 8Gi
-    mountPath: /bitnami/mongodb
-  ## @section RBAC parameters
-  ##
-
-  ## ServiceAccount
-  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-  ##
-  serviceAccount:
-    create: true
-  ## @section Arbiter parameters
-  ##
-  arbiter:
-    enabled: false
-    podSecurityContext:
-      enabled: false
-      fsGroup: 1001
-    containerSecurityContext:
-      enabled: false
-      runAsUser: 1001
+    image: "" # e.g. "your-registry.io/your-org/custom-mongodb:7.0.14"
+    imagePullSecrets: []
+  ## Explicit connection URI override (optional: if pointing to an external or pre-existing operator cluster)
+  customUri: ""
 
 websocket_encrypt_key: "FormsFlow.AI"
 insight_api_key: ""
