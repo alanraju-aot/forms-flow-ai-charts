@@ -11,11 +11,11 @@ The following changes were made to the `forms-flow-ai-charts` repository to repl
 | Component / File | Modification Description |
 | :--- | :--- |
 | **`charts/forms-flow-ai/Chart.yaml`** | **REMOVED**: Completely removed the Bitnami `mongodb` chart dependency. |
-| **`charts/forms-flow-ai/templates/mongodb-community.yaml`** | **NEW TEMPLATE**: Automatically deploys the `MongoDBCommunity` Custom Resource (`apiVersion: mongodbcommunity.mongodb.com/v1`) and user credential secret when `mongodbCommunity.enabled=true`. |
+| **`charts/forms-flow-ai/templates/mongodb-community.yaml`** | **NEW TEMPLATE**: Automatically deploys the `mongodb` Custom Resource (`apiVersion: mongodb.mongodb.com/v1`) and user credential secret when `mongodb.enabled=true`. |
 | **`charts/forms-flow-ai/templates/secrets.yaml`** | **UPDATED**: Dynamically builds the multi-member ReplicaSet URI (`mongodb://user:pass@pod-0.svc,pod-1.svc,pod-2.svc/formsflow?replicaSet=...&authSource=admin`) for `NODE_CONFIG` (Formio) and `MONGODB_URI` (WebAPI & Data Layer). Removed legacy Bitnami fallback. |
-| **`charts/forms-flow-ai/templates/configmap.yaml`** | **UPDATED**: Cleans up `FORMIO_DB_PORT` to read `mongodbCommunity.port` (default 27017). |
-| **`charts/forms-flow-ai/values.yaml`** | **PURGED & REPLACED**: Completely removed the 160+ line legacy Bitnami `mongodb:` block (including `bitnamilegacy/mongodb` images, arbiter, etc.) and replaced with pure `mongodbCommunity:` configuration. |
-| **`charts/forms-flow-ai/README.md`** | **UPDATED**: Replaced old Bitnami parameter documentation with `mongodbCommunity` configuration table. |
+| **`charts/forms-flow-ai/templates/configmap.yaml`** | **UPDATED**: Cleans up `FORMIO_DB_PORT` to read `mongodb.port` (default 27017). |
+| **`charts/forms-flow-ai/values.yaml`** | **PURGED & REPLACED**: Completely removed the 160+ line legacy Bitnami `mongodb:` block (including `bitnamilegacy/mongodb` images, arbiter, etc.) and replaced with pure `mongodb:` configuration. |
+| **`charts/forms-flow-ai/README.md`** | **UPDATED**: Replaced old Bitnami parameter documentation with `mongodb` configuration table. |
 | **`scripts/install-forms-flow.sh`** | **UPDATED**: Removed obsolete Bitnami flag `--set mongodb.podSecurityContext.enabled=true`. |
 | **Subcharts (`forms-flow-forms`, `forms-flow-api`, `forms-flow-data-layer`)** | **NO CHANGES NEEDED**: These components seamlessly consume database configuration from the parent `forms-flow-ai` secret/configmap. |
 
@@ -53,10 +53,10 @@ kubectl get pods -n test -l app.kubernetes.io/name=community-operator
 
 ## ⚙️ Step 2: Configure Your Database Settings in `values.yaml`
 
-In `charts/forms-flow-ai/values.yaml`, the `mongodbCommunity` block allows you to customize your database:
+In `charts/forms-flow-ai/values.yaml`, the `mongodb` block allows you to customize your database:
 
 ```yaml
-mongodbCommunity:
+mongodb:
   enabled: true
   name: "forms-flow-mongodb"
   
@@ -69,16 +69,16 @@ mongodbCommunity:
   port: 27017
 
   auth:
-    database: "formsflow"
-    username: "mongodb"
-    password: "changeme"
+    database: ""
+    username: ""
+    password: ""
     authSource: "admin"
     existingSecretName: ""
     existingSecretKey: "password"
 
   # Storage configuration (gp3 on AWS EKS)
   storage:
-    storageClassName: "gp3" # Leave empty to use cluster default
+    storageClassName: "" # Leave empty to use cluster default
     size: "8Gi"
 
   resources:
@@ -114,8 +114,8 @@ If you wish to override values dynamically during install (e.g., custom domain o
 helm upgrade --install forms-flow-ai ./charts/forms-flow-ai \
   --namespace test \
   --set Domain="your-domain.com" \
-  --set mongodbCommunity.version="7.0.14" \
-  --set mongodbCommunity.auth.password="YourSecurePassword123"
+  --set mongodb.version="7.0.14" \
+  --set mongodb.auth.password="YourSecurePassword123"
 ```
 
 ---
@@ -134,8 +134,8 @@ kubectl get svc -n test forms-flow-mongodb-svc
 
 ### 4.2 Verify Database Status in Custom Resource
 ```bash
-kubectl get mongodbcommunity -n test
-kubectl describe mongodbcommunity forms-flow-mongodb -n test
+kubectl get mongodb -n test
+kubectl describe mongodb forms-flow-mongodb -n test
 ```
 The status should transition to `Phase: Running`.
 
@@ -167,6 +167,6 @@ kubectl logs -n test -l app.kubernetes.io/name=forms-flow-api --tail=50
 ## 🔄 How to Upgrade MongoDB Version Later
 
 To upgrade MongoDB in the future:
-1. Update `mongodbCommunity.version` in `values.yaml` (e.g. from `"7.0.14"` to `"8.0.0"`).
+1. Update `mongodb.version` in `values.yaml` (e.g. from `"7.0.14"` to `"8.0.0"`).
 2. Run `helm upgrade forms-flow-ai ./charts/forms-flow-ai -n test`.
 3. The operator automatically initiates a **rolling upgrade** of the replica set nodes without downtime.

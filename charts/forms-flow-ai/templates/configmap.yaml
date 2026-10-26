@@ -28,7 +28,7 @@ data:
     FORMIO_SERVICE_URL: http://{{ tpl (index .Values "forms-flow-forms" "service" "name") . }}:{{ tpl (index .Values "forms-flow-forms" "service" "port") . }}
     WEB_API_URL: https://{{ tpl (index .Values "forms-flow-web" "ingress" "hostname") . }}/webapi
     WEB_API_SERVICE_URL: http://{{ tpl (index .Values "forms-flow-api" "service" "name") . }}:{{ tpl (index .Values "forms-flow-api" "service" "port") . }}
-    FORMIO_DB_PORT: {{ (.Values.mongodbCommunity.port | default 27017) | quote }}
+    FORMIO_DB_PORT: {{ (.Values.mongodb.port | default 27017) | quote }}
     FORMSFLOW_WEB_URL: https://{{ tpl (index .Values "forms-flow-web" "ingress" "hostname") . }}
     FORMSFLOW_ADMIN_URL: https://{{ tpl (index .Values "forms-flow-web" "ingress" "hostname") . }}/admin/api/v1
     FORMSFLOW_ADMIN_BASE: https://{{ tpl (index .Values "forms-flow-web" "ingress" "hostname") . }}/admin/api

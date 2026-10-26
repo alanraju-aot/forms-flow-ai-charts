@@ -157,25 +157,25 @@ forms-flow-idm:
 
 | Parameter                                        | Description                                                  | Default Value                    |
 |--------------------------------------------------|--------------------------------------------------------------|----------------------------------|
-| `mongodbCommunity.enabled`                       | Enable deployment of MongoDBCommunity Custom Resource.       | `true`                           |
-| `mongodbCommunity.name`                          | Name of the MongoDB cluster and replica set.                 | `forms-flow-mongodb`             |
-| `mongodbCommunity.version`                       | MongoDB engine version (e.g., 7.0.14, 6.0.19, 8.0.0).         | `7.0.14`                         |
-| `mongodbCommunity.members`                       | Number of replica set members (3 for HA, 1 for single-node). | `3`                              |
-| `mongodbCommunity.type`                          | Architecture type (`ReplicaSet`).                            | `ReplicaSet`                     |
-| `mongodbCommunity.port`                          | Service port for MongoDB.                                    | `27017`                          |
-| `mongodbCommunity.auth.database`                 | Database name created for forms-flow-ai.                     | `formsflow`                      |
-| `mongodbCommunity.auth.username`                 | Username for application database authentication.            | `mongodb`                        |
-| `mongodbCommunity.auth.password`                 | Password for the application database user.                  | `changeme`                       |
-| `mongodbCommunity.auth.authSource`               | Authentication database.                                     | `admin`                          |
-| `mongodbCommunity.storage.storageClassName`      | StorageClass for persistent volumes (e.g. `gp3`).            | `""` (Cluster default)           |
-| `mongodbCommunity.storage.size`                  | Size of the persistent storage volume.                       | `8Gi`                            |
-| `mongodbCommunity.resources.requests.cpu`        | CPU requests for mongod container.                           | `500m`                           |
-| `mongodbCommunity.resources.requests.memory`     | Memory requests for mongod container.                        | `1Gi`                            |
-| `mongodbCommunity.resources.limits.cpu`          | CPU limits for mongod container.                             | `2`                              |
-| `mongodbCommunity.resources.limits.memory`       | Memory limits for mongod container.                          | `2Gi`                            |
-| `mongodbCommunity.customImage.enabled`           | Enable using a custom in-house container image.              | `false`                          |
-| `mongodbCommunity.customImage.image`             | Custom MongoDB container image reference.                    | `""`                             |
-| `mongodbCommunity.customUri`                     | Direct MongoDB connection URI override (if external).        | `""`                             |
+| `mongodb.enabled`                       | Enable deployment of mongodb Custom Resource.       | `true`                           |
+| `mongodb.name`                          | Name of the MongoDB cluster and replica set.                 | `forms-flow-mongodb`             |
+| `mongodb.version`                       | MongoDB engine version (e.g., 7.0.14, 6.0.19, 8.0.0).         | `7.0.14`                         |
+| `mongodb.members`                       | Number of replica set members (3 for HA, 1 for single-node). | `3`                              |
+| `mongodb.type`                          | Architecture type (`ReplicaSet`).                            | `ReplicaSet`                     |
+| `mongodb.port`                          | Service port for MongoDB.                                    | `27017`                          |
+| `mongodb.auth.database`                 | Database name created for forms-flow-ai.                     | `formsflow`                      |
+| `mongodb.auth.username`                 | Username for application database authentication.            | `mongodb`                        |
+| `mongodb.auth.password`                 | Password for the application database user.                  | `changeme`                       |
+| `mongodb.auth.authSource`               | Authentication database.                                     | `admin`                          |
+| `mongodb.storage.storageClassName`      | StorageClass for persistent volumes (e.g. `gp3`).            | `""` (Cluster default)           |
+| `mongodb.storage.size`                  | Size of the persistent storage volume.                       | `8Gi`                            |
+| `mongodb.resources.requests.cpu`        | CPU requests for mongod container.                           | `500m`                           |
+| `mongodb.resources.requests.memory`     | Memory requests for mongod container.                        | `1Gi`                            |
+| `mongodb.resources.limits.cpu`          | CPU limits for mongod container.                             | `2`                              |
+| `mongodb.resources.limits.memory`       | Memory limits for mongod container.                          | `2Gi`                            |
+| `mongodb.customImage.enabled`           | Enable using a custom in-house container image.              | `false`                          |
+| `mongodb.customImage.image`             | Custom MongoDB container image reference.                    | `""`                             |
+| `mongodb.customUri`                     | Direct MongoDB connection URI override (if external).        | `""`                             |
 
 
 ### PostgreSQL 

@@ -39,7 +39,7 @@ forms-flow-data-analysis:
 forms-flow-forms:
   admin:
     email: "me@defineme.com"
-    password: "admin"
+    password: ""
   service:
     name: forms-flow-forms
     port: "3001"
@@ -55,7 +55,7 @@ forms-flow-web:
   EnableMultitenant: false
   clientid: forms-flow-web
   ingress:
-      hostname: forms-flow-{{.Release.Namespace}}.{{tpl (.Values.Domain) .}}
+      hostname: forms-flow-web-{{.Release.Namespace}}.{{tpl (.Values.Domain) .}}
   service:
     name: forms-flow-web
     port: "8080"
@@ -69,31 +69,34 @@ imageCredentials:
 # ==============================================================================
 # MongoDB Community Operator Configuration
 # ==============================================================================
-mongodbCommunity:
-  ## @param mongodbCommunity.enabled Deploy or connect to MongoDB Community Operator cluster
+mongodb:
+  ## @param mongodb.enabled Deploy or connect to MongoDB Community Operator cluster
+  global: 
+    security: 
+      allowInsecureImages: true
   enabled: true
-  ## @param mongodbCommunity.name Name of the MongoDBCommunity custom resource and replica set
+  ## @param mongodb.name Name of the mongodb custom resource and replica set
   name: "forms-flow-mongodb"
-  ## @param mongodbCommunity.version MongoDB version to deploy (e.g. "7.0.14", "6.0.19", "8.0.0")
+  ## @param mongodb.version MongoDB version to deploy (e.g. "7.0.14", "6.0.19", "8.0.0")
   version: "7.0.14"
-  ## @param mongodbCommunity.members Number of replica set members (3 for HA, 1 for single-node)
+  ## @param mongodb.members Number of replica set members (3 for HA, 1 for single-node)
   members: 3
-  ## @param mongodbCommunity.type Cluster type (ReplicaSet)
+  ## @param mongodb.type Cluster type (ReplicaSet)
   type: ReplicaSet
-  ## @param mongodbCommunity.port MongoDB service port
+  ## @param mongodb.port MongoDB service port
   port: 27017
   ## Application database and authentication details
   auth:
     database: "formsflow"
-    username: "mongodb"
-    password: "changeme"
+    username: ""
+    password: ""
     authSource: "admin"
-    ## @param mongodbCommunity.auth.existingSecretName Existing Secret name containing password (if pre-created)
+    ## @param mongodb.auth.existingSecretName Existing Secret name containing password (if pre-created)
     existingSecretName: ""
     existingSecretKey: "password"
   ## Storage configuration (e.g. AWS EKS EBS gp3)
   storage:
-    storageClassName: "gp2"
+    storageClassName: ""
     size: "8Gi"
     logsSize: "4Gi"
   ## Resource allocation
