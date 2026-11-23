@@ -1,0 +1,13 @@
+apiVersion: v2
+name: forms-flow-process-gateway
+description: forms-flow-process-gateway is an integration gateway service for formsflow.ai connecting external and offline systems to process engines.
+icon: "https://raw.githubusercontent.com/AOT-Technologies/forms-flow-ai/develop/.images/logo.png"
+version: v8.4.2
+type: application
+appVersion: "v8.4.2"
+dependencies:
+- name: common
+  repository: https://charts.bitnami.com/bitnami
+  tags:
+  - bitnami-common
+  version: 2.27.0

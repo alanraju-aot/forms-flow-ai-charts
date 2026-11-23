@@ -1,0 +1,324 @@
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
+  replicas: {{ .Values.replicaCount }}
+  strategy: {{- include "common.tplvalues.render" (dict "value" .Values.updateStrategy "context" $ ) | nindent 4 }}
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
+        app.kubernetes.io/component: forms-flow-process-gateway
+      annotations:
+        {{- if (include "forms-flow-process-gateway.createConfigmap" .) }}
+        checksum/configuration: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- end }}
+        checksum/proxy-configuration: {{ include (print $.Template.BasePath "/proxy-config.yaml") . | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "forms-flow-process-gateway.serviceAccountName" . }}
+      {{- include "forms-flow-process-gateway.imagePullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- if .Values.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "component" "forms-flow-process-gateway" "customLabels" $podLabels "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "component" "forms-flow-process-gateway" "customLabels" $podLabels "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.podSecurityContext "context" $) | nindent 8 }}
+      {{- end }}
+      containers:       
+        - name: forms-flow-process-gateway
+          image: {{ include "forms-flow-process-gateway.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if .Values.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if or .Values.extraEnvVarsCM .Values.extraEnvVarsSecret }}
+          envFrom:
+            {{- if .Values.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- end }}
+          env:
+          - name: PYTHONUNBUFFERED
+            valueFrom:
+              configMapKeyRef:
+                key: PYTHONUNBUFFERED
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: FASTAPI_ENV
+            valueFrom:
+              configMapKeyRef:
+                key: FASTAPI_ENV
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: FORMSFLOW_PROCESS_GATEWAY_WORKERS
+            valueFrom:
+              configMapKeyRef:
+                key: FORMSFLOW_PROCESS_GATEWAY_WORKERS
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: FORWARDED_ALLOW_IPS
+            valueFrom:
+              configMapKeyRef:
+                key: FORWARDED_ALLOW_IPS
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: LOG_LEVEL
+            valueFrom:
+              configMapKeyRef:
+                key: LOG_LEVEL
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: ENGINE_CONFIG_FILE
+            valueFrom:
+              configMapKeyRef:
+                key: ENGINE_CONFIG_FILE
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: KEYCLOAK_URL
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_URL
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: KEYCLOAK_URL_REALM
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_URL_REALM
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: KEYCLOAK_URL_HTTP_RELATIVE_PATH
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_URL_HTTP_RELATIVE_PATH
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: JWT_OIDC_JWKS_URI
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_JWT_OIDC_JWKS_URI
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: JWT_OIDC_ISSUER
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_JWT_OIDC_ISSUER
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: JWT_OIDC_AUDIENCE
+            valueFrom:
+              secretKeyRef:
+                key: WEB_CLIENTID
+                name: "{{ .Values.formsflow.secret }}"
+          - name: JWT_OIDC_ALGORITHMS
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_JWT_OIDC_ALGORITHMS
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: JWT_OIDC_JWKS_CACHE_TIMEOUT
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_JWT_OIDC_JWKS_CACHE_TIMEOUT
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: KEYCLOAK_ENABLE_CLIENT_AUTH
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_ENABLE_CLIENT_AUTH
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: MULTI_TENANCY_ENABLED
+            valueFrom:
+              configMapKeyRef:
+                key: MULTI_TENANCY_ENABLED
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: FORMS_FLOW_WEB_URL
+            valueFrom:
+              configMapKeyRef:
+                key: FORMSFLOW_WEB_URL
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: FORMS_FLOW_API_URL
+            valueFrom:
+              configMapKeyRef:
+                key: WEB_API_SERVICE_URL
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: FORMS_FLOW_ADMIN_URL
+            valueFrom:
+              configMapKeyRef:
+                key: FORMSFLOW_ADMIN_SERVICE_URL
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: CAMUNDA_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                key: BPM_API_URL
+                name: "{{ .Values.formsflow.configmap }}"
+          - name: CAMUNDA_URL_PREFIX
+            valueFrom:
+              configMapKeyRef:
+                key: CAMUNDA_URL_PREFIX
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: BPM_CLIENT_ID
+            valueFrom:
+              configMapKeyRef:
+                key: BPM_CLIENT_ID
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: KEYCLOAK_BPM_CLIENT_ID
+            valueFrom:
+              configMapKeyRef:
+                key: KEYCLOAK_BPM_CLIENT_ID
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: BPM_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: KEYCLOAK_CLIENTSECRET
+                name: "{{ .Values.formsflow.secret }}"
+          - name: WEBSOCKET_ENCRYPT_KEY
+            valueFrom:
+              secretKeyRef:
+                key: WEBSOCKET_ENCRYPT_KEY
+                name: "{{ .Values.formsflow.secret }}"
+          - name: GATEWAY_ADAPTERS
+            valueFrom:
+              configMapKeyRef:
+                key: GATEWAY_ADAPTERS
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: OFFLINE_ON_BEHALF_LEEWAY_S
+            valueFrom:
+              configMapKeyRef:
+                key: OFFLINE_ON_BEHALF_LEEWAY_S
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: OFFLINE_WORKER_CLIENT_ID
+            valueFrom:
+              configMapKeyRef:
+                key: OFFLINE_WORKER_CLIENT_ID
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: OFFLINE_WORKER_PUBLIC_KEY
+            valueFrom:
+              configMapKeyRef:
+                key: OFFLINE_WORKER_PUBLIC_KEY
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          - name: OFFLINE_REPLAY_REDIS_URL
+            valueFrom:
+              configMapKeyRef:
+                key: OFFLINE_REPLAY_REDIS_URL
+                name: {{ .Values.existingConfigmap | default (include "common.names.fullname" .) }}
+          {{- if .Values.extraEnvVars }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 10 }}
+          {{- end }}
+          ports:
+          - name: http
+            containerPort: {{ .Values.containerPorts.http }}
+            protocol: TCP
+          {{- if not .Values.diagnosticMode.enabled }}
+          {{- if .Values.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.readinessProbe.port | default .Values.containerPorts.http }}
+              scheme: {{ .Values.readinessProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold | default 1 }}
+          {{- end }}
+          {{- if .Values.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: {{ .Values.livenessProbe.port | default .Values.containerPorts.http }}
+              scheme: {{ .Values.livenessProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold | default 1 }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- else if ne .Values.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
+          {{- end }}
+          {{- if or .Values.extraVolumeMounts .Values.sidecars }}
+          volumeMounts:
+            {{- if .Values.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+            {{- if .Values.sidecars }}
+            {{- include "common.tplvalues.render" ( dict "value" .Values.sidecars "context" $) | nindent 8 }}
+            {{- end }}
+          {{- end }}
+        - name: nginx
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
+          {{- end }}
+          image: {{ include "forms-flow-process-gateway.nginx.image" . }}
+          imagePullPolicy: {{ .Values.ExtraContainer.image.pullPolicy | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.ingress.servicePort }}
+              protocol: TCP
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-tmp
+              mountPath: /tmp
+      volumes:
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-tmp
+        emptyDir: {}
+      - name: nginx-config-volume
+        configMap:
+          name: {{ include "common.names.fullname" . }}-nginx-config      
+      {{- if .Values.extraVolumes }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 6 }}
+      {{- end }}
+      restartPolicy: Always

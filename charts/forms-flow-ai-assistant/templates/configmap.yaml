@@ -1,0 +1,51 @@
+{{- if (include "forms-flow-ai-assistant.createConfigmap" .) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: forms-flow-ai-assistant
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+data:
+  FORMSFLOW_API_CORS_ORIGINS: {{ .Values.corsOrigins | default "*" | quote }}
+
+  # AWS S3 configuration
+  AI_ASSISTANT_S3_BUCKET: {{ .Values.s3.bucket | quote }}
+  AI_ASSISTANT_S3_REGION: {{ .Values.s3.region | quote }}
+  AI_ASSISTANT_S3_CONNECT_TIMEOUT_SECONDS: {{ .Values.s3.connectTimeoutSeconds | default "5" | quote }}
+  AI_ASSISTANT_S3_READ_TIMEOUT_SECONDS: {{ .Values.s3.readTimeoutSeconds | default "20" | quote }}
+  AI_ASSISTANT_S3_MAX_RETRIES: {{ .Values.s3.maxRetries | default "2" | quote }}
+
+  # AI Assistant configuration
+  AI_ASSISTANT_MAX_FILE_SIZE_MB: {{ .Values.aiAssistant.maxFileSizeMb | default "10" | quote }}
+  AI_ASSISTANT_EMBEDDING_DIMENSIONS: {{ .Values.aiAssistant.embeddingDimensions | default "1536" | quote }}
+  AI_ASSISTANT_EMBED_BATCH_SIZE: {{ .Values.aiAssistant.embedBatchSize | default "100" | quote }}
+  AI_ASSISTANT_MAX_MESSAGE_CHARS: {{ .Values.aiAssistant.maxMessageChars | default "4000" | quote }}
+  AI_ASSISTANT_MAX_ANSWER_TOKENS: {{ .Values.aiAssistant.maxAnswerTokens | default "1000" | quote }}
+  AI_ASSISTANT_LLM_TIMEOUT_SECONDS: {{ .Values.aiAssistant.llmTimeoutSeconds | default "60" | quote }}
+  AI_ASSISTANT_MAX_CONTEXT_CHARS: {{ .Values.aiAssistant.maxContextChars | default "20000" | quote }}
+  AI_ASSISTANT_MAX_SOURCE_TOKENS: {{ .Values.aiAssistant.maxSourceTokens | default "50000" | quote }}
+  AI_ASSISTANT_MAX_HISTORY_TOKENS: {{ .Values.aiAssistant.maxHistoryTokens | default "3000" | quote }}
+  AI_ASSISTANT_REQUEUE_STRANDED_JOBS: {{ .Values.aiAssistant.requeueStrandedJobs | default "true" | quote }}
+
+  # Backend configuration
+  RETRIEVAL_PROFILE: {{ .Values.backend.retrievalProfile | default "vector" | quote }}
+  VECTOR_STORE_BACKEND: {{ .Values.backend.vectorStoreBackend | default "pgvector" | quote }}
+  OBJECT_STORE_BACKEND: {{ .Values.backend.objectStoreBackend | default "s3" | quote }}
+  JOB_QUEUE_BACKEND: {{ .Values.backend.jobQueueBackend | default "pgqueuer" | quote }}
+
+  # Logging rotation
+  API_LOG_ROTATION_WHEN: {{ .Values.logging.rotationWhen | default "d" | quote }}
+  API_LOG_ROTATION_INTERVAL: {{ .Values.logging.rotationInterval | default "1" | quote }}
+  API_LOG_BACKUP_COUNT: {{ .Values.logging.backupCount | default "7" | quote }}
+
+  # OpenTelemetry
+  ENABLE_OPENTELEMETRY: {{ .Values.openTelemetry.enabled | default "false" | quote }}
+  OTLP_ENDPOINT: {{ .Values.openTelemetry.endpoint | default "" | quote }}
+  {{- if .Values.configuration }}
+  {{- include "common.tplvalues.render" (dict "value" .Values.configuration "context" $) | nindent 2 }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,13 @@
+apiVersion: v2
+name: forms-flow-ai-assistant
+description: forms-flow-ai-assistant is an AI assistant service for formsflow.ai providing vector search, RAG, and AI capabilities.
+icon: "https://raw.githubusercontent.com/AOT-Technologies/forms-flow-ai/develop/.images/logo.png"
+version: v8.4.1
+type: application
+appVersion: "v8.4.0-alpha"
+dependencies:
+- name: common
+  repository: https://charts.bitnami.com/bitnami
+  tags:
+  - bitnami-common
+  version: 2.27.0
