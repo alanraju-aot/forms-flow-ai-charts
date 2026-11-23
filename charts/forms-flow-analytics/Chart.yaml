@@ -4,7 +4,7 @@ description: forms-flow-analytics leverages Redash to build interactive dashboar
 icon: "https://raw.githubusercontent.com/AOT-Technologies/forms-flow-ai/develop/.images/logo.png"
 version: v8.4.2
 type: application
-appVersion: "8.3.0"
+appVersion: "v8.4.2"
 dependencies:
   - name: redis
     version: "^19.1.0"

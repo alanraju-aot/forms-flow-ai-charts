@@ -4,7 +4,7 @@ description: forms-flow-api is an adaptive tier for correlating form management,
 icon: "https://raw.githubusercontent.com/AOT-Technologies/forms-flow-ai/develop/.images/logo.png"
 version: v8.4.2
 type: application
-appVersion: "v8.4.0"
+appVersion: "v8.4.2"
 dependencies:
 - name: common
   repository: https://charts.bitnami.com/bitnami
